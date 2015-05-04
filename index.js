@@ -6,21 +6,15 @@ let nodeify = require('bluebird-nodeify')
 let mime = require('mime-types')
 let rimraf = require('rimraf')
 let mkdirp = require('mkdirp')
-let net = require('net')
-let nssocket = require('nssocket')
 let argv = require('yargs').argv
 
 require('songbird')
 
-console.log('argumane :' + argv.dir)
-
 const ROOT_DIR = argv.dir || path.resolve(process.cwd())
 
-console.log(ROOT_DIR)
 
 const NODE_ENV = process.env.NODE_ENV
 const PORT = process.env.PORT || 8000
-//const ROOT_DIR = path.resolve(process.cwd())
 
 let app = express()
 
@@ -29,17 +23,6 @@ if (NODE_ENV === 'development') {
 }
 
 app.listen(PORT, () => console.log(`LISTENING @ http://127.0.0.1:${PORT}`))
-
-let socket = new nssocket.NsSocket({
-    reconnect: true,
-    type: 'tcp4',
- })
-
-socket.on('start', function () {
-    console.dir('start')
-  })
-
-socket.connect(`${PORT}`)
 
 app.get('*', setFilePath, sendHeaders, (req, res) => {
     if (res.body) {
@@ -82,11 +65,9 @@ app.post('*', setFilePath, setDirDetails, (req, res, next) => {
     }().catch(next)
 })
 
-
 function setDirDetails(req, res, next) {
 
     let filePath = req.filePath
-
     let endsWithSlash = filePath.charAt(filePath.length - 1) === path.seperator
     let hasExt = path.extname(filePath) !== ''
     req.isDir = endsWithSlash || !hasExt
