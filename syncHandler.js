@@ -4,14 +4,17 @@ let mkdirp = require('mkdirp')
 let rimraf = require('rimraf')
 let path = require('path')
 let chokidar = require('chokidar')
+let argv = require('yargs').argv
+
+const ROOT_DIR = argv.dir || path.resolve(process.cwd())
 
 function newConnectionHandler(socket) {
 
-    chokidar.watch('./files', {
+    chokidar.watch(ROOT_DIR, {
             ignored: /[\/\\]\./
         })
         .on('all', function(event, path) {
-            console.log(event, path)
+            console.log("Event detected by chokidar: " + event + " at path : " + path)
             if (event === 'unlinkDir') {
                 socket.write({
                     "action": "deleteDir", // "update" or "delete"
@@ -31,12 +34,18 @@ function newConnectionHandler(socket) {
                 })
 
             } else if (event === 'add') {
-                socket.write({
-                    "action": "create", // "update" or "delete"
-                    "path": path,
-                    "type": "file", // or "file"
-                    "contents": "Update the file now!!", // or the base64 encoded file contents
-                    "updated": 1427851834642 // time of creation/deletion/update
+                fs.readFile(path, "utf8", function(err, fileData) {
+                    if (err) {
+                        console.error(err)
+                        return
+                    }
+                    socket.write({
+                        "action": "create", // "update" or "delete"
+                        "path": path,
+                        "type": "file",
+                        "contents": fileData, // or the base64 encoded file contents
+                        "updated": 1427851834642 // time of creation/deletion/update
+                    })
                 })
             } else if (event === 'addDir') {
                 socket.write({
@@ -47,7 +56,7 @@ function newConnectionHandler(socket) {
                     "updated": 1427851834642 // time of creation/deletion/update
                 })
             } else if (event === 'change') {
-                fs.readFile(path, function(err, fileData) {
+                fs.readFile(path, "utf8", function(err, fileData) {
                     if (err) {
                         console.error(err)
                         return
@@ -65,7 +74,6 @@ function newConnectionHandler(socket) {
         })
 
     socket.on('data', function(data) {
-        console.log("data.action :" + data.action)
         if (data.action === 'create') {
             handleCreate(data)
         } else if (data.action === 'update') {
@@ -81,7 +89,6 @@ function newConnectionHandler(socket) {
 
 function handleCreate(data) {
     let filePath = data.path
-    console.log('Is directory :' + isDir(filePath))
     if (isDir(filePath)) {
         mkdirp(filePath, function(err) {
             if (err) console.error(err)
@@ -97,20 +104,18 @@ function handleCreate(data) {
 }
 
 function handleUpdate(data) {
-    fs.readFile(data.path, function(err, originalData) {
+    fs.readFile(data.path, "utf8", function(err, originalData) {
         if (err) {
             console.error(err)
             return
         }
-        console.log(originalData)
-        if (originalData.length === data.contents.length) {
-            console.log("Same data" + originalData.length)
+        if (originalData.length === data.contents.length) {  
+            // data is same hence return
             return
         }
         fs.truncate(data.path, 0)
         fs.writeFile(data.path, data.contents, function(err_write) {
-            if (err_write) console.error(err_write)
-            else console.log('Updated files:' + data.path)
+             console.log('Updated files:' + data.path)
         })
     })
 
@@ -118,7 +123,6 @@ function handleUpdate(data) {
 
 function handleDeleteDir(data) {
     let filePath = data.path
-    console.log('reaching')
     rimraf(filePath, function(err) {
         if (err) console.error(err)
         else console.log('Deleted directory:' + filePath)
