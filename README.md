@@ -26,6 +26,9 @@ This is a basic Dropbox clone to sync files across multiple remote folders.
 - [ ] User can connect to the server using an FTP client
 - [X] Watch the directory on both server and client using `chokidar` to sync server and client sides
 
+#####Walkthrough
+<a href="dropbox-demo.gif" alt="video walkthrough" title="video walkthrough">video walkthrough</a>
+
 
 ##Instructions to run
 - `git clone https://github.com/abhagupta/codepath-dropbox`
