@@ -38,11 +38,14 @@ This is a basic Dropbox clone to sync files across multiple remote folders.
 At this point, the server and client will be talking to each other using a TCP connection. 
 Any changes in the 'files' folder will be watched by `chokidar` node module. As soon as any change is done in
 the files system, `chokidar` event is fired for `add`, `addDir`, `change` , `unlink` , `unlinkDir`. I capture
-this event and handle the operation on either side.
+this event and handle the operation on either side. A utility/handler file `syncHandler.js` is used to share the code
  
-## TCP package used : `json-over-tcp`
+## Technology Stack : 
+`express`
+`json-over-tcp`
+`mkdirp`
+`chokidar`
+`yargs`
 
-## How many hours did it take to complete?
-   7 hrs
-## Which required and optional stories have you completed?
+
 
